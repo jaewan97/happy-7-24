@@ -7,6 +7,7 @@
 ```
 happy-7-24-app/
 ├── index.html      # 앱 전체 (마크업 + 스타일 + 스크립트)
+├── og-image.png     # 카카오톡/슬랙/트위터 등에서 링크 공유 시 보이는 대표 이미지
 ├── vercel.json      # Vercel 정적 배포 설정
 ├── .gitignore
 └── README.md
@@ -45,8 +46,15 @@ vercel --prod # 프로덕션 배포
 
 ## 3. 배포 후 확인할 점
 - 모바일 브라우저에서 접속하면 반응형으로 화면 크기에 맞춰 자동 조정됩니다.
+- 하단 탭 메뉴는 화면 높이에 고정되어 있어 스크롤과 상관없이 항상 보입니다.
 - 현재 데이터(근무 패턴, 스케줄)는 **브라우저 세션 메모리**에만 저장되며 새로고침 시 초기화됩니다. 데이터를 계속 유지하려면 로컬 스토리지 또는 백엔드/DB 연동이 추가로 필요합니다.
 - 커스텀 도메인을 연결하려면 Vercel 프로젝트의 **Settings → Domains**에서 도메인을 추가하세요.
+- **Open Graph 이미지 절대경로 확인**: `index.html`의 `og:image`, `twitter:image`는 현재 `/og-image.png`(상대경로)로 되어 있습니다. 카카오톡/슬랙 등 대부분의 링크 미리보기는 상대경로도 잘 인식하지만, 일부 플랫폼(특히 페이스북)은 절대 URL을 요구할 수 있어요. 배포 후 실제 도메인이 정해지면 아래처럼 절대경로로 바꿔주는 것을 권장합니다.
+  ```html
+  <meta property="og:image" content="https://your-domain.vercel.app/og-image.png">
+  <meta name="twitter:image" content="https://your-domain.vercel.app/og-image.png">
+  ```
+  배포 후 카카오톡 오픈그래프 디버거나 https://www.opengraph.xyz 에서 미리보기를 확인해보세요.
 
 ## 다음 단계로 고려할 수 있는 것들
 - 데이터 영속화: Supabase, Firebase, 또는 Vercel Postgres/KV 연동
