@@ -474,6 +474,27 @@ const CATS = {
 const DOW = ['일','월','화','수','목','금','토'];
 
 const _now = new Date();
+const STORAGE_KEY = 'happy724_state_v1';
+
+function loadSaved(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw);
+  }catch(e){ return null; }
+}
+function persistState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      pattern: state.pattern,
+      schedules: state.schedules,
+      notifyLead: state.notifyLead,
+      nextId: state.nextId,
+    }));
+  }catch(e){ /* localStorage unavailable (e.g. sandboxed preview) — state stays in-memory for this session */ }
+}
+
+const _saved = loadSaved();
 
 let state = {
   today: new Date(_now.getFullYear(), _now.getMonth(), _now.getDate()),
@@ -501,6 +522,13 @@ let state = {
   notifyLead: 10,
   nextId: 7,
 };
+
+if(_saved){
+  if(_saved.pattern) state.pattern = _saved.pattern;
+  if(Array.isArray(_saved.schedules)) state.schedules = _saved.schedules;
+  if(typeof _saved.notifyLead === 'number') state.notifyLead = _saved.notifyLead;
+  if(typeof _saved.nextId === 'number') state.nextId = _saved.nextId;
+}
 
 /* ---------------- HELPERS ---------------- */
 function pad(n){ return String(n).padStart(2,'0'); }
@@ -919,7 +947,7 @@ function openManualSheet(){
     ${featuresHtml}
     <div class="manual-tip">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
-      <div>근무 패턴과 스케줄은 이 화면 세션에만 저장돼요. 새로고침하면 초기화되니 참고해주세요.</div>
+      <div>근무 패턴과 스케줄은 이 브라우저에 자동 저장돼서, 앱을 다시 열어도 그대로 남아있어요. 다른 기기나 다른 브라우저와는 공유되지 않아요.</div>
     </div>
     <div class="sheet-actions">
       <button class="btn btn-primary" style="flex:1;" onclick="closeSheet()">확인했어요</button>
@@ -974,6 +1002,7 @@ function togglePattern(i){
 }
 function setPatternTime(i, key, val){
   state.pattern[i][key] = val;
+  persistState();
 }
 
 document.getElementById('photoInput').addEventListener('change', function(){
@@ -1028,7 +1057,7 @@ function renderSettings(){
 
     <h2 class="section-title">데이터</h2>
     <div class="card settings-card">
-      <div class="note-text">근무 패턴과 스케줄은 이 화면 세션에만 저장돼요. 다른 사람과 공유되지 않아요.</div>
+      <div class="note-text">근무 패턴과 스케줄은 이 브라우저(기기)에 자동 저장돼요. 앱을 다시 열어도 유지되지만, 다른 기기나 시크릿 모드에서는 보이지 않아요.</div>
       <button class="list-btn danger" onclick="resetAll()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
         모든 데이터 초기화
@@ -1060,6 +1089,7 @@ function resetAll(){
   state.schedules = [];
   Object.keys(state.pattern).forEach(k=>{ state.pattern[k] = {on:false, start:'09:00', end:'18:00'}; });
   state.notifyLead = 10;
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
   renderAll();
   showToast('모든 데이터를 초기화했어요');
 }
@@ -1143,6 +1173,7 @@ function renderAll(){
   renderSchedule();
   renderInput();
   renderSettings();
+  persistState();
 }
 switchTab('home');
 </script>
